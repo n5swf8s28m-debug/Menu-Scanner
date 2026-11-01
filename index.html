@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fullness Points</title>
+<meta name="description" content="Point your camera at a plate. Get fullness points.">
+<meta name="theme-color" content="#1f3f8f">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&display=swap">
+
+<style>
+:root{
+  --paper:#eceff5; --card:#ffffff; --card-2:#f6f8fb;
+  --ink:#141821; --ink-soft:#5a6275; --rule:#c8cfdc;
+  --accent:#1f3f8f; --accent-soft:#e2e9f8;
+  --t1:#2f7d62; --t2:#1f6fa8; --t3:#9d6508; --t4:#b03a2e;
+  --t1-bg:#e4f2eb; --t2-bg:#e2eef8; --t3-bg:#f7eed9; --t4-bg:#f8e5e1;
+  --display:"Oswald","Haettenschweiler","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:max(16px,env(safe-area-inset-left,0px));
+  --safe-r:max(16px,env(safe-area-inset-right,0px));
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0f131b;--card:#19202b;--card-2:#141a24;
+  --ink:#e9edf5;--ink-soft:#98a2b7;--rule:#2c3543;
+  --accent:#86a9f2;--accent-soft:#1d2942;
+  --t1:#5cc097;--t2:#5fabde;--t3:#e2ab3f;--t4:#ea745f;
+  --t1-bg:#15302a;--t2-bg:#132938;--t3-bg:#32280f;--t4-bg:#361f1b;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0f131b;--card:#19202b;--card-2:#141a24;
+  --ink:#e9edf5;--ink-soft:#98a2b7;--rule:#2c3543;
+  --accent:#86a9f2;--accent-soft:#1d2942;
+  --t1:#5cc097;--t2:#5fabde;--t3:#e2ab3f;--t4:#ea745f;
+  --t1-bg:#15302a;--t2-bg:#132938;--t3-bg:#32280f;--t4-bg:#361f1b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.5;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:var(--safe-t);z-index:100;background:var(--accent)}
+
+/* ── Screens ── */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;padding-top:var(--safe-t);overflow:hidden}
+.screen.active{display:flex}
+
+/* ══════════════ TALLY SCREEN ══════════════ */
+#screen-tally{background:var(--paper)}
+
+.mast{background:var(--accent);color:#fff;padding:18px var(--safe-l) 16px;flex-shrink:0}
+.mast-row{display:flex;align-items:flex-start;gap:10px}
+.mast h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,6vw,34px);line-height:1.05;letter-spacing:.01em;text-transform:uppercase;flex:1}
+.mast .sub{font-size:12px;opacity:.85;margin-top:4px}
+.mast .slug{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin-bottom:5px}
+.icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0;margin-top:2px}
+.icon-btn:hover{background:rgba(255,255,255,.28)}
+
+.tally-bar{background:var(--card);border-bottom:2px solid var(--ink);padding:10px var(--safe-l);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.tally-bar .score{font-family:var(--mono);font-weight:600;font-size:30px;line-height:1;font-variant-numeric:tabular-nums;color:var(--accent)}
+.tally-bar .meta{font-size:11px;color:var(--ink-soft);line-height:1.4;flex:1;min-width:0}
+.tally-bar .meta b{font-family:var(--mono);color:var(--ink);font-weight:600}
+.reset-btn{font-size:11px;font-weight:600;color:var(--ink-soft);background:none;border:1px solid var(--rule);border-radius:3px;padding:6px 10px;cursor:pointer;font-family:var(--body);white-space:nowrap}
+.reset-btn:hover{color:var(--ink);border-color:var(--ink-soft)}
+
+.key{display:flex;flex-wrap:wrap;gap:5px;padding:12px var(--safe-l) 10px;flex-shrink:0}
+.chip{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.04em;padding:3px 7px;border-radius:3px;white-space:nowrap}
+.c1{background:var(--t1-bg);color:var(--t1)}.c2{background:var(--t2-bg);color:var(--t2)}
+.c3{background:var(--t3-bg);color:var(--t3)}.c4{background:var(--t4-bg);color:var(--t4)}
+
+.items-scroll{flex:1;overflow-y:auto;padding:0 var(--safe-l) 90px}
+.item-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.item-row .nm{flex:1;font-size:14px;font-weight:600}
+.item-row .nm .sub{font-size:11px;color:var(--ink-soft);font-weight:400;margin-top:1px}
+.pts-badge{font-family:var(--mono);font-weight:600;font-size:12px;padding:3px 7px;border-radius:3px;white-space:nowrap}
+.del-btn{background:none;border:none;color:var(--rule);font-size:18px;cursor:pointer;padding:2px 4px;line-height:1}
+.del-btn:hover{color:#b03a2e}
+.empty-tally{text-align:center;padding:48px 24px;color:var(--ink-soft)}
+.empty-tally .big{font-size:48px;margin-bottom:12px}
+.empty-tally p{font-size:14px}
+
+.fab{position:fixed;bottom:calc(var(--safe-b) + 18px);left:50%;transform:translateX(-50%);
+  background:var(--accent);color:#fff;border:none;border-radius:999px;
+  padding:16px 28px;font-family:var(--body);font-size:16px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 18px rgba(0,0,0,.28);
+  white-space:nowrap;z-index:10}
+.fab:hover{filter:brightness(1.1)}
+.fab .fab-icon{font-size:22px}
+
+/* ══════════════ SCAN SCREEN ══════════════ */
+#screen-scan{background:#000}
+
+.scan-header{position:absolute;top:var(--safe-t);left:0;right:0;z-index:20;
+  padding:12px 16px;display:flex;align-items:center;gap:10px;
+  background:linear-gradient(to bottom,rgba(0,0,0,.65) 0%,transparent 100%)}
+.scan-header h2{font-family:var(--display);color:#fff;font-size:20px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;flex:1}
+.back-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:20px;padding:6px 14px;font-family:var(--body);font-size:13px;font-weight:600;cursor:pointer}
+.back-btn:hover{background:rgba(255,255,255,.28)}
+
+#video{width:100%;height:100%;object-fit:cover;display:block}
+
+/* Result card slides up from bottom */
+.result-card{position:absolute;bottom:0;left:0;right:0;z-index:20;
+  background:var(--card);border-radius:18px 18px 0 0;
+  padding:20px var(--safe-l) calc(var(--safe-b) + 20px);
+  transition:transform .25s ease}
+.result-card.hidden{transform:translateY(100%)}
+.result-name{font-family:var(--display);font-size:24px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;margin-bottom:4px}
+.result-label{font-size:12px;color:var(--ink-soft);margin-bottom:14px;font-family:var(--mono)}
+.result-pts-row{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.result-pts{font-family:var(--mono);font-weight:600;font-size:36px;line-height:1;color:var(--accent)}
+.result-pts-label{font-size:13px;color:var(--ink-soft);line-height:1.3}
+.result-pts-label b{font-family:var(--mono);color:var(--ink)}
+.conf-bar{height:4px;background:var(--rule);border-radius:2px;overflow:hidden;margin-bottom:16px}
+.conf-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+.result-actions{display:flex;gap:10px}
+.add-btn{flex:2;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:14px;font-family:var(--body);font-size:16px;font-weight:600;cursor:pointer}
+.add-btn:hover{filter:brightness(1.1)}
+.manual-btn{flex:1;background:none;border:1px solid var(--rule);border-radius:8px;padding:14px;font-family:var(--body);font-size:14px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+.manual-btn:hover{border-color:var(--ink-soft);color:var(--ink)}
+
+/* Scanning state (before result) */
+.scan-hint{position:absolute;bottom:0;left:0;right:0;z-index:20;
+  text-align:center;padding:24px var(--safe-l) calc(var(--safe-b) + 24px);
+  background:linear-gradient(to top,rgba(0,0,0,.65) 0%,transparent 100%);
+  color:#fff}
+.scan-hint .sh-icon{font-size:36px;margin-bottom:8px}
+.scan-hint p{font-size:14px;opacity:.9}
+.scan-hint.hidden{display:none}
+
+/* Loading model */
+.model-loading{position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.75);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff}
+.model-loading.hidden{display:none}
+.spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.model-loading p{font-size:13px;opacity:.85}
+
+/* Manual pick modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border-radius:18px 18px 0 0;width:100%;max-height:80vh;display:flex;flex-direction:column}
+.modal-head{padding:16px var(--safe-l) 12px;border-bottom:1px solid var(--rule);display:flex;align-items:center;flex-shrink:0}
+.modal-head h3{font-family:var(--display);font-size:15px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;flex:1}
+.modal-close{background:none;border:none;font-size:20px;color:var(--ink-soft);cursor:pointer;padding:2px}
+.modal-list{overflow-y:auto;padding:8px var(--safe-l) calc(var(--safe-b) + 8px)}
+.manual-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--rule);cursor:pointer}
+.manual-item:last-child{border:none}
+.manual-item:hover .mi-name{color:var(--accent)}
+.mi-name{flex:1;font-size:14px;font-weight:600}
+.mi-pts{font-family:var(--mono);font-size:12px;font-weight:600;padding:3px 7px;border-radius:3px}
+
+button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════ TALLY SCREEN ══════════════════════════ -->
+<div id="screen-tally" class="screen active">
+  <header class="mast">
+    <div class="slug">Fullness Points</div>
+    <div class="mast-row">
+      <h1 id="session-name" contenteditable="true" spellcheck="false">Today's Tally</h1>
+      <button class="icon-btn" id="btn-tally-reset" title="Reset">↺</button>
+    </div>
+    <p class="sub">Point the camera at your plate. Add points as you go.</p>
+  </header>
+
+  <div class="tally-bar">
+    <div class="score" id="score">0</div>
+    <div class="meta">
+      <b id="count">0</b> items · heaviest: <b id="worst">—</b>
+    </div>
+    <button class="reset-btn" id="btn-reset">Reset</button>
+  </div>
+
+  <div class="key">
+    <span class="chip c1">1–4 FREE SWING</span>
+    <span class="chip c2">5–9 REAL FOOD</span>
+    <span class="chip c3">10–16 COMMITMENT</span>
+    <span class="chip c4">17+ CAREER ENDER</span>
+  </div>
+
+  <div class="items-scroll" id="items-list">
+    <div class="empty-tally" id="empty-state">
+      <div class="big">🍽️</div>
+      <p>Tap the camera button to identify what's on your plate.</p>
+    </div>
+  </div>
+
+  <button class="fab" id="btn-scan">
+    <span class="fab-icon">📷</span>
+    <span>Scan plate</span>
+  </button>
+</div>
+
+<!-- ══════════════════════════ SCAN SCREEN ══════════════════════════ -->
+<div id="screen-scan" class="screen">
+  <video id="video" autoplay playsinline muted></video>
+
+  <div class="scan-header">
+    <button class="back-btn" id="btn-back">← Back</button>
+    <h2>Point at your plate</h2>
+  </div>
+
+  <!-- Loading model overlay -->
+  <div class="model-loading" id="model-loading">
+    <div class="spinner"></div>
+    <p id="model-msg">Loading vision model…</p>
+  </div>
+
+  <!-- Hint shown while scanning -->
+  <div class="scan-hint" id="scan-hint">
+    <div class="sh-icon">🔍</div>
+    <p>Hold camera steady over the food</p>
+  </div>
+
+  <!-- Result card -->
+  <div class="result-card hidden" id="result-card">
+    <div class="result-name" id="res-name">—</div>
+    <div class="result-label" id="res-label"></div>
+    <div class="result-pts-row">
+      <div class="result-pts" id="res-pts">0</div>
+      <div class="result-pts-label">fullness<br><b id="res-tier">—</b></div>
+    </div>
+    <div class="conf-bar"><div class="conf-fill" id="conf-fill" style="width:0%"></div></div>
+    <div class="result-actions">
+      <button class="add-btn" id="btn-add">+ Add to tally</button>
+      <button class="manual-btn" id="btn-manual">Pick manually</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ MANUAL PICK MODAL ══════════════════════════ -->
+<div class="modal-overlay" id="manual-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>What did you eat?</h3>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-list" id="manual-list"></div>
+  </div>
+</div>
+
+<!-- Scripts: TF.js and MobileNet as classic scripts so window.* is populated -->
+<script src="/vendor/tf.min.js"></script>
+<script src="/vendor/mobilenet.min.js"></script>
+
+<script type="module">
+import { loadModel, classify, bestFood } from './src/classifier.js';
+import { MANUAL_CATEGORIES }             from './src/food-map.js';
+import { getTier }                        from './src/scoring.js';
+
+// ── State ────────────────────────────────────────────────────────────────
+let items   = JSON.parse(localStorage.getItem('fp-items') || '[]');
+// Each item: { id, name, pts, tierCls, label? }
+let stream  = null;
+let scanLoop = null;
+let pendingFood = null; // { name, pts, label, confidence }
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const show = id => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+};
+function save() { localStorage.setItem('fp-items', JSON.stringify(items)); }
+function tierCls(pts) { return getTier(pts).cls; }
+function tierLabel(pts) { return getTier(pts).label; }
+
+// ── Tally rendering ───────────────────────────────────────────────────────
+function renderTally() {
+  const list = $('items-list');
+  const empty = $('empty-state');
+
+  if (!items.length) {
+    empty.style.display = '';
+    // Clear any item rows but keep the empty state
+    [...list.querySelectorAll('.item-row')].forEach(r => r.remove());
+  } else {
+    empty.style.display = 'none';
+    // Re-render all rows
+    [...list.querySelectorAll('.item-row')].forEach(r => r.remove());
+    // Newest first
+    [...items].reverse().forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.dataset.id = item.id;
+      row.innerHTML = `
+        <div class="nm">
+          ${item.name}
+          ${item.label && item.label !== item.name ? `<div class="sub">${item.label}</div>` : ''}
+        </div>
+        <div class="pts-badge ${item.tierCls}">${item.pts} PT</div>
+        <button class="del-btn" data-id="${item.id}" title="Remove">✕</button>`;
+      list.appendChild(row);
+    });
+  }
+
+  // Tally bar
+  let total = 0, worst = null, worstPts = 0;
+  for (const it of items) {
+    total += it.pts;
+    if (it.pts > worstPts) { worstPts = it.pts; worst = it.name; }
+  }
+  $('score').textContent = total;
+  $('count').textContent = items.length;
+  $('worst').textContent = worst ?? '—';
+}
+
+$('items-list').addEventListener('click', e => {
+  const btn = e.target.closest('.del-btn');
+  if (!btn) return;
+  items = items.filter(i => i.id !== btn.dataset.id);
+  save();
+  renderTally();
+});
+
+$('btn-reset').addEventListener('click', () => {
+  if (!items.length || confirm('Clear the tally?')) {
+    items = []; save(); renderTally();
+  }
+});
+$('btn-tally-reset').addEventListener('click', () => {
+  if (!items.length || confirm('Clear the tally?')) {
+    items = []; save(); renderTally();
+  }
+});
+
+// ── Camera / scan screen ──────────────────────────────────────────────────
+$('btn-scan').addEventListener('click', openScan);
+$('btn-back').addEventListener('click', closeScan);
+
+async function openScan() {
+  show('screen-scan');
+  $('result-card').classList.add('hidden');
+  $('scan-hint').classList.remove('hidden');
+  pendingFood = null;
+
+  // Start camera
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false,
+    });
+    $('video').srcObject = stream;
+    await $('video').play();
+  } catch (err) {
+    alert('Camera access denied. Please allow camera in your browser settings.');
+    closeScan();
+    return;
+  }
+
+  // Load model (cached after first load)
+  const loading = $('model-loading');
+  loading.classList.remove('hidden');
+  try {
+    await loadModel((pct, msg) => { $('model-msg').textContent = msg ?? 'Loading…'; });
+  } catch (err) {
+    loading.classList.add('hidden');
+    alert('Could not load vision model. Run setup.sh to download model files.');
+    closeScan();
+    return;
+  }
+  loading.classList.add('hidden');
+
+  startScanLoop();
+}
+
+function closeScan() {
+  stopScanLoop();
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  $('video').srcObject = null;
+  show('screen-tally');
+}
+
+// ── Scan loop — classify every 1.5 s ──────────────────────────────────────
+function startScanLoop() {
+  scanLoop = setInterval(async () => {
+    const video = $('video');
+    if (video.readyState < 2) return;
+    try {
+      const preds = await classify(video, 5);
+      const food  = bestFood(preds, 0.03); // 3% threshold for food matching
+      if (food) {
+        showResult(food);
+      } else {
+        // No food found — keep hint visible, hide result
+        $('result-card').classList.add('hidden');
+        $('scan-hint').classList.remove('hidden');
+      }
+    } catch (e) {
+      console.warn('classify error', e);
+    }
+  }, 1500);
+}
+
+function stopScanLoop() {
+  if (scanLoop) { clearInterval(scanLoop); scanLoop = null; }
+}
+
+function showResult(food) {
+  pendingFood = food;
+  $('res-name').textContent = food.name;
+  $('res-label').textContent = food.label;
+  $('res-pts').textContent   = food.pts;
+  $('res-tier').textContent  = tierLabel(food.pts);
+  $('res-pts').className     = 'result-pts'; // reset
+  // Confidence bar — cap display at 60% so even modest confidence shows well
+  const dispConf = Math.min(food.confidence / 0.6, 1);
+  $('conf-fill').style.width = Math.round(dispConf * 100) + '%';
+  $('result-card').classList.remove('hidden');
+  $('scan-hint').classList.add('hidden');
+}
+
+// ── Add to tally ──────────────────────────────────────────────────────────
+$('btn-add').addEventListener('click', () => {
+  if (!pendingFood) return;
+  addItem(pendingFood.name, pendingFood.pts, pendingFood.label);
+  closeScan();
+});
+
+function addItem(name, pts, label) {
+  items.push({
+    id:      Math.random().toString(36).slice(2),
+    name,
+    pts,
+    label:   label !== name ? label : undefined,
+    tierCls: tierCls(pts),
+  });
+  save();
+  renderTally();
+}
+
+// ── Manual pick ────────────────────────────────────────────────────────────
+$('btn-manual').addEventListener('click', openManual);
+$('modal-close').addEventListener('click', closeManual);
+$('manual-modal').addEventListener('click', e => {
+  if (e.target === $('manual-modal')) closeManual();
+});
+
+function openManual() {
+  const list = $('manual-list');
+  list.innerHTML = MANUAL_CATEGORIES.map(c => {
+    const tc = tierCls(c.pts);
+    return `<div class="manual-item" data-name="${c.name.replace(/"/g,'&quot;')}" data-pts="${c.pts}">
+      <div class="mi-name">${c.name}</div>
+      <div class="mi-pts ${tc}">${c.pts} PT</div>
+    </div>`;
+  }).join('');
+  $('manual-modal').classList.add('open');
+}
+
+function closeManual() {
+  $('manual-modal').classList.remove('open');
+}
+
+$('manual-list').addEventListener('click', e => {
+  const row = e.target.closest('.manual-item');
+  if (!row) return;
+  addItem(row.dataset.name, +row.dataset.pts);
+  closeManual();
+  closeScan();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(console.warn);
+}
+renderTally();
+</script>
+</body>
+</html>
